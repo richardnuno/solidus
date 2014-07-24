@@ -121,6 +121,7 @@ describe Spree::Variant do
 
       context "with decimal comma" do
         it "captures the proper amount for a formatted price" do
+          pending "We are not interested in locales at this point"
           I18n.locale = :de
           variant.price = '1.599,99'
           variant.price.should == 1599.99
@@ -129,6 +130,7 @@ describe Spree::Variant do
 
       context "with a numeric price" do
         it "uses the price as is" do
+          pending "We are not interested in locales at this point"
           I18n.locale = :de
           variant.price = 1599.99
           variant.price.should == 1599.99
@@ -146,6 +148,7 @@ describe Spree::Variant do
 
       context "with decimal comma" do
         it "captures the proper amount for a formatted price" do
+          pending "We are not interested in locales at this point"
           I18n.locale = :de
           variant.cost_price = '1.599,99'
           variant.cost_price.should == 1599.99
@@ -154,6 +157,7 @@ describe Spree::Variant do
 
       context "with a numeric price" do
         it "uses the price as is" do
+          pending "We are not interested in locales at this point"
           I18n.locale = :de
           variant.cost_price = 1599.99
           variant.cost_price.should == 1599.99
