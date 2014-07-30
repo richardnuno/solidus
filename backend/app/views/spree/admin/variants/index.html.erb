@@ -16,25 +16,24 @@
 
       <%- locals = {:f => f} %>
 
-      <div class="three columns">
-        <div class="field">
-          <%= f.label :sku_cont, Spree.t(:sku) %>
-          <%= f.text_field :sku_cont, :size => 15 %>
-        </div>
-      </div>
-
-      <% @option_types.each do |option_type| %>
-        <div data-hook="admin_variants_index_search">
-          <div class="three columns">
-            <div class="field">
-              <% option_values = @option_values.select { |ov| ov.option_type_id == option_type.id } %>
-              <%= f.label :option_values_presentation_in, option_type.presentation %>
-              <br />
-              <%= f.collection_select :option_values_presentation_in, option_values.sort_by(&:presentation), :presentation, :presentation, { :include_blank => Spree.t('match_choices.none') }, { class: "select2 fullwidth" } %>
-            </div>
+      <div data-hook="admin_variants_index_search">
+        <div class="three columns">
+          <div class="field">
+            <%= f.label :sku_cont, Spree.t(:sku) %>
+            <%= f.text_field :sku_cont, :size => 15 %>
           </div>
         </div>
-      <% end %>
+
+        <div class="three columns">
+          <div class="field">
+            <% searchable_attribute = "color" %>
+            <% option_values = @option_values.select { |ov| ov.option_type.name == searchable_attribute } %>
+            <%= f.label :option_values_presentation_in, searchable_attribute %>
+            <br />
+            <%= f.collection_select :option_values_presentation_in, option_values.sort_by(&:presentation), :presentation, :presentation, { :include_blank => Spree.t('match_choices.none') }, { class: "select2 fullwidth" } %>
+          </div>
+        </div>
+      </div>
 
       <div class="clear"></div>
 
