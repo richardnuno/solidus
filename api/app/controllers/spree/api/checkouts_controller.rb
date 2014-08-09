@@ -31,7 +31,7 @@ module Spree
 
       def advance
         authorize! :update, @order, order_token
-        while @order.next; end
+        while advance_further? && @order.next; end
         respond_with(@order, default_template: 'spree/api/orders/show', status: 200)
       end
 
@@ -49,7 +49,9 @@ module Spree
             @order.associate_user!(Spree.user_class.find(user_id))
           end
           return if after_update_attributes
-          state_callback(:after) if @order.next
+          unless params[:dont_advance]
+            state_callback(:after) if @order.next
+          end
           respond_with(@order, default_template: 'spree/api/orders/show')
         else
           invalid_resource!(@order)
@@ -57,6 +59,10 @@ module Spree
       end
 
       private
+        def advance_further?
+          return true unless params[:target_state]
+          @order.state != params[:target_state]
+        end
 
         def object_params
           # For payment step, filter order parameters to produce the expected nested attributes for a single payment and its source, discarding attributes for payment methods other than the one selected
