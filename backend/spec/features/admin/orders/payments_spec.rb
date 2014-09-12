@@ -109,7 +109,7 @@ describe 'Payments' do
 
     context 'payment is pending', js: true do
       before do
-        pending "travisci is having issues with poltergeist"
+        skip "travisci is having issues with poltergeist"
       end
 
       let(:state) { 'pending' }
