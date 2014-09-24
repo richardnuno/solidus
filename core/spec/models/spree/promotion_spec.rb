@@ -207,81 +207,77 @@ describe Spree::Promotion do
     end
   end
 
-  context "#products" do
-    let(:promotion) { create(:promotion) }
-
-    context "when it has product rules with products associated" do
-      let(:promotion_rule) { Spree::Promotion::Rules::Product.new }
-
-      before do
-        promotion_rule.promotion = promotion
-        promotion_rule.products << create(:product)
-        promotion_rule.save
-      end
-
-      it "should have products" do
-        promotion.reload.products.size.should == 1
-      end
-    end
-
-    context "when there's no product rule associated" do
-      before(:each) do
-        promotion.stub_chain(:rules, :to_a).and_return([mock_model(Spree::Promotion::Rules::User)])
-      end
-
-      it "should not have products but still return an empty array" do
-        promotion.products.should be_blank
-      end
-    end
-  end
-
   context "#eligible?" do
-    before do
-      @order = create(:order)
-      promotion.name = "Foo"
-      calculator = Spree::Calculator::FlatRate.new
-      action_params = { :promotion => promotion, :calculator => calculator }
-      @action = Spree::Promotion::Actions::CreateAdjustment.create(action_params)
+    let(:promotable) { create :order }
+    subject { promotion.eligible?(promotable) }
+    context "when promotion is expired" do
+      before { promotion.expires_at = Time.now - 10.days }
+      it { should be false }
     end
-
-    context "when it is expired" do
-      before { promotion.stub(:expired? => true) }
-      specify { promotion.should_not be_eligible(@order) }
+    context "when promotable is a Spree::LineItem" do
+      let(:promotable) { create :line_item }
+      let(:product) { promotable.product }
+      before do
+        product.promotionable = promotionable
+      end
+      context "and product is promotionable" do
+        let(:promotionable) { true }
+        it { should be true }
+      end
+      context "and product is not promotionable" do
+        let(:promotionable) { false }
+        it { should be false }
+      end
     end
-
-    context "when it is not expired" do
-      before { promotion.expires_at = Time.now + 1.day }
-      specify { promotion.should be_eligible(@order) }
+    context "when promotable is a Spree::Order" do
+      let(:promotable) { create :order }
+      context "and it is empty" do
+        it { should be true }
+      end
+      context "and it contains items" do
+        let!(:line_item) { create(:line_item, order: promotable) }
+        context "and the items are all non-promotionable" do
+          before do
+            line_item.product.update_column(:promotionable, false)
+          end
+          it { should be false }
+        end
+        context "and at least one item is promotionable" do
+          it { should be true }
+        end
+      end
     end
   end
 
-  context "#rules_are_eligible?" do
+  context "#eligible_rules" do
     let(:promotable) { double('Promotable') }
     it "true if there are no rules" do
-      promotion.rules_are_eligible?(promotable).should be true
+      promotion.eligible_rules(promotable).should eq []
     end
 
     it "true if there are no applicable rules" do
       promotion.promotion_rules = [stub_model(Spree::PromotionRule, :eligible? => true, :applicable? => false)]
       promotion.promotion_rules.stub(:for).and_return([])
-      promotion.rules_are_eligible?(promotable).should be true
+      promotion.eligible_rules(promotable).should eq []
     end
 
     context "with 'all' match policy" do
+      let(:promo1) { stub_model(Spree::PromotionRule, :eligible? => true, :applicable? => true) }
+      let(:promo2) { stub_model(Spree::PromotionRule, :eligible? => true, :applicable? => true) }
+
       before { promotion.match_policy = 'all' }
 
       it "should have eligible rules if all rules are eligible" do
-        promotion.promotion_rules = [stub_model(Spree::PromotionRule, :eligible? => true, :applicable? => true),
-                                     stub_model(Spree::PromotionRule, :eligible? => true, :applicable? => true)]
+        promotion.promotion_rules = [promo1, promo2]
         promotion.promotion_rules.stub(:for).and_return(promotion.promotion_rules)
-        promotion.rules_are_eligible?(promotable).should be true
+        promotion.eligible_rules(promotable).should eq [promo1, promo2]
       end
 
       it "should not have eligible rules if any of the rules is not eligible" do
         promotion.promotion_rules = [stub_model(Spree::PromotionRule, :eligible? => true, :applicable? => true),
                                      stub_model(Spree::PromotionRule, :eligible? => false, :applicable? => true)]
         promotion.promotion_rules.stub(:for).and_return(promotion.promotion_rules)
-        promotion.rules_are_eligible?(promotable).should be false
+        promotion.eligible_rules(promotable).should be_nil
       end
     end
 
@@ -295,9 +291,65 @@ describe Spree::Promotion do
         true_rule.stub(:eligible? => true)
         promotion.stub(:rules => [true_rule])
         promotion.stub_chain(:rules, :for).and_return([true_rule])
-        promotion.rules_are_eligible?(promotable).should be true
+        promotion.eligible_rules(promotable).should eq [true_rule]
       end
     end
+  end
+
+  describe '#line_item_actionable?' do
+    let(:order) { double Spree::Order }
+    let(:line_item) { double Spree::LineItem}
+    let(:true_rule) { double Spree::PromotionRule, eligible?: true, applicable?: true, actionable?: true }
+    let(:false_rule) { double Spree::PromotionRule, eligible?: true, applicable?: true, actionable?: false }
+    let(:rules) { [] }
+
+    before do
+      promotion.stub(:rules) { rules }
+      rules.stub(:for) { rules }
+    end
+
+    subject { promotion.line_item_actionable? order, line_item }
+
+    context 'when the order is eligible for promotion' do
+      context 'when there are no rules' do
+        it { should be }
+      end
+
+      context 'when there are rules' do
+        context 'when the match policy is all' do
+          before { promotion.match_policy = 'all' }
+
+          context 'when all rules allow action on the line item' do
+            let(:rules) { [true_rule] }
+            it { should be}
+          end
+
+          context 'when at least one rule does not allow action on the line item' do
+            let(:rules) { [true_rule, false_rule] }
+            it { should_not be}
+          end
+        end
+
+        context 'when the match policy is any' do
+          before { promotion.match_policy = 'any' }
+
+          context 'when at least one rule allows action on the line item' do
+            let(:rules) { [true_rule, false_rule] }
+            it { should be }
+          end
+
+          context 'when no rules allow action on the line item' do
+            let(:rules) { [false_rule] }
+            it { should_not be}
+          end
+        end
+      end
+    end
+
+      context 'when the order is not eligible for the promotion' do
+        before { promotion.starts_at = Time.current + 2.days }
+        it { should_not be }
+      end
   end
 
   # regression for #4059
@@ -353,6 +405,30 @@ describe Spree::Promotion do
 
     context 'when the user nas not used this promo' do
       it { should be false }
+    end
+  end
+
+  describe "adding items to the cart" do
+    let(:order) { create :order }
+    let(:line_item) { create :line_item, order: order }
+    let(:promo) { create :promotion_with_item_adjustment, adjustment_rate: 5, code: 'promo' }
+    let(:variant) { create :variant }
+
+    it "updates the promotions for new line items" do
+      expect(line_item.adjustments).to be_empty
+      expect(order.adjustment_total).to eq 0
+
+      promo.activate order: order
+      order.update!
+
+      expect(line_item.adjustments).to have(1).item
+      expect(order.adjustment_total).to eq -5
+
+      other_line_item = order.contents.add(variant, 1, order.currency)
+
+      expect(other_line_item).not_to eq line_item
+      expect(other_line_item.adjustments).to have(1).item
+      expect(order.adjustment_total).to eq -10
     end
   end
 end
