@@ -4,6 +4,9 @@
   <div class="row">
     <div class="alpha six columns">
       <dl>
+        <%# The check on 'source' is a workaround for missing payment sources %>
+        <%# See ENG-1243 %>
+        <% if payment.source %>
         <dt><%= Spree.t(:name_on_card) %>:</dt>
         <dd><%= payment.source.name %></dd>
 
@@ -15,6 +18,7 @@
 
         <dt><%= Spree.t(:expiration) %>:</dt>
         <dd><%= payment.source.month %>/<%= payment.source.year %></dd>
+        <% end %>
       </dl>
     </div>
   </div>
