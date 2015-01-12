@@ -15,6 +15,9 @@ module Spree
     # object with callbacks (otherwise you will end up in an infinite recursion as the
     # associations try to save and then in turn try to call +update!+ again.)
     def update
+      caller_info = caller[0..1].join(',')
+      Rails.logger.info "update_caller=#{caller_info.inspect}"
+
       benchmark('update') do
         update_totals
         if order.completed?
