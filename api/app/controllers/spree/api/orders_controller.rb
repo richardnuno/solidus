@@ -35,7 +35,6 @@ module Spree
       def empty
         authorize! :update, @order, order_token
         @order.empty!
-        @order.update!
         render text: nil, status: 200
       end
 
@@ -133,14 +132,6 @@ module Spree
             super + admin_shipment_attributes
           else
             super
-          end
-        end
-
-        def next!(options={})
-          if @order.valid? && @order.next
-            render :show, status: options[:status] || 200
-          else
-            render :could_not_transition, status: 422
           end
         end
 
