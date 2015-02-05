@@ -19,6 +19,7 @@ module Spree
       Rails.logger.info "update_caller=#{caller_info.inspect}"
 
       benchmark('update') do
+        update_item_count
         update_totals
         if order.completed?
           update_payment_state
