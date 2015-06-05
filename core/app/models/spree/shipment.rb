@@ -20,6 +20,7 @@ module Spree
     before_validation :set_cost_zero_when_nil
 
     attr_accessor :special_instructions
+    before_destroy :ensure_can_destroy
 
     accepts_nested_attributes_for :address
     accepts_nested_attributes_for :inventory_units
@@ -414,5 +415,11 @@ module Spree
         end
       end
 
+      def ensure_can_destroy
+        unless pending?
+          errors.add(:state, :cannot_destroy, state: self.state)
+          return false
+        end
+      end
   end
 end

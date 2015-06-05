@@ -14,6 +14,8 @@ module Spree
     has_many :return_items, inverse_of: :inventory_unit, dependent: :destroy
     has_one :original_return_item, class_name: "Spree::ReturnItem", foreign_key: :exchange_inventory_unit_id, dependent: :destroy
 
+    before_destroy :ensure_can_destroy
+
     scope :backordered, -> { where state: 'backordered' }
     scope :on_hand, -> { where state: 'on_hand' }
     scope :pre_shipment, -> { where(state: PRE_SHIPMENT_STATES) }
@@ -136,6 +138,18 @@ module Spree
 
       def current_return_item
         return_items.not_cancelled.first
+      end
+
+      def ensure_can_destroy
+        if !backordered? && !on_hand?
+          errors.add(:state, :cannot_destroy, state: self.state)
+          return false
+        end
+
+        unless shipment.pending?
+          errors.add(:base, :cannot_destroy_shipment_state, state: shipment.state)
+          return false
+        end
       end
   end
 end
