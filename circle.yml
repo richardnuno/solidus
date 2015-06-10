@@ -17,4 +17,5 @@ deployment:
   docs:
     branch: 'docs'
     commands:
+      - gem i yard --no-ri --no-rdoc
       - cd core && yard
