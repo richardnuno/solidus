@@ -13,3 +13,8 @@ test:
   override:
     - './build-ci.rb test':
        parallel: true
+deployment:
+  docs:
+    branch: 'docs'
+    commands:
+      - cd core && yard
