@@ -19,8 +19,8 @@
         <%= link_to_with_icon 'th-large', Spree.t(:variants),  admin_product_variants_url(@product) %>
       <% end if can?(:admin, Spree::Variant) %>
       <%= content_tag :li, :class => ('active' if current == 'Product Properties') do %>
-        <%= link_to_with_icon 'tasks', Spree.t(:product_properties), admin_product_product_properties_url(@product) %>
-      <% end if can?(:admin, Spree::ProductProperty) %>
+        <%= link_to_with_icon 'tasks', Spree.t(:product_properties), admin_product_variant_properties_url(@product) %>
+      <% end if can?(:admin, Spree::VariantProperty) %>
       <%= content_tag :li, :class => ('active' if current == 'Stock Management') do %>
         <%= link_to_with_icon 'cubes', Spree.t(:stock_management), admin_product_stock_url(@product) %>
       <% end if can?(:admin, Spree::StockItem) %>

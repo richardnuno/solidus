@@ -26,7 +26,7 @@ Spree::Core::Engine.add_routes do
     resources :tax_categories
 
     resources :products do
-      resources :product_properties do
+      resources :variant_properties do
         collection do
           post :update_positions
         end

@@ -14,7 +14,7 @@ module Spree
         end
         can [:display, :update], CreditCard, user_id: user.id
         can :display, Product
-        can :display, ProductProperty
+        can :display, VariantProperty
         can :display, Property
         can :create, Spree.user_class
         can [:read, :update], Spree.user_class, id: user.id

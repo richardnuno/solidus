@@ -15,8 +15,17 @@ module Spree
 
     has_many :product_option_types, dependent: :destroy, inverse_of: :product
     has_many :option_types, through: :product_option_types
-    has_many :product_properties, dependent: :destroy, inverse_of: :product
-    has_many :properties, through: :product_properties
+    #has_many :product_properties, dependent: :destroy, inverse_of: :product
+    def product_properties
+      self.master.variant_properties
+    end
+    def variant_properties
+      self.master.variant_properties
+    end
+    def properties
+      self.product_properties
+    end
+    #has_many :properties, through: :product_properties
 
     has_many :classifications, dependent: :delete_all, inverse_of: :product
     has_many :taxons, through: :classifications
@@ -91,7 +100,7 @@ module Spree
 
     attr_accessor :option_values_hash
 
-    accepts_nested_attributes_for :product_properties, allow_destroy: true, reject_if: lambda { |pp| pp[:property_name].blank? }
+    #accepts_nested_attributes_for :product_properties, allow_destroy: true, reject_if: lambda { |pp| pp[:property_name].blank? }
 
     alias :options :product_option_types
 
