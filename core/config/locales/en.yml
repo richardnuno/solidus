@@ -1560,6 +1560,7 @@ en:
     value: Value
     variant: Variant
     variant_placeholder: Choose a variant
+    variant_properties: Variant properties
     variant_search: Variant Search
     variant_search_placeholder: "SKU or Option Value"
     variant_to_add: Variant to add

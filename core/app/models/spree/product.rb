@@ -16,11 +16,9 @@ module Spree
     has_many :product_option_types, dependent: :destroy, inverse_of: :product
     has_many :option_types, through: :product_option_types
     #has_many :product_properties, dependent: :destroy, inverse_of: :product
+    delegate :variant_properties, to: :master
     def product_properties
-      self.master.variant_properties
-    end
-    def variant_properties
-      self.master.variant_properties
+      self.variant_properties
     end
     def properties
       self.product_properties
