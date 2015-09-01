@@ -49,22 +49,23 @@
 
     <% end %>
   </fieldset>
-  <fieldset class='no-border-bottom'>
-    <legend align="center"><%= Spree.t(:variant_properties) %></legend>
-    <fieldset class='no-border-top'>
-      <%= f.fields_for :variants_by_option_values do |master_variant_form| %>
-        <% @option_types.each do |option_type| %>
-          <div class="field">
-            <%= label :new_variant, option_type.presentation %>
-            <%= select_tag "ovi[]", options_from_collection_for_select(option_type.option_values, :id, :presentation, params[:ovi]), class: 'select2 fullwidth', include_blank: true, id: "#{option_type.name}_option_type_select" %>
-          </div>
-        <% end %>
-        <div class="form-buttons filter-actions actions">
-          <%= button Spree.t(:filter_results) %>
-        </div>
-      <% end %>
-    </fieldset>
+<% end %>
+
+<%= form_tag admin_product_variant_properties_path, method: :get, id: 'variant_option_value_selections' do %>
+<fieldset class='no-border-bottom'>
+  <legend align="center"><%= Spree.t(:variant_properties) %></legend>
+  <fieldset class='no-border-top'>
+    <% @option_types.each do |option_type| %>
+      <div class="field">
+        <%= label :new_variant, option_type.presentation %>
+        <%= select_tag "ovi[]", options_from_collection_for_select(option_type.option_values, :id, :presentation, params[:ovi]), class: 'select2 fullwidth', include_blank: true, id: "#{option_type.name}_option_type_select" %>
+      </div>
+    <% end %>
+    <div class="form-buttons filter-actions actions">
+      <%= button Spree.t(:filter_results) %>
+    </div>
   </fieldset>
+</fieldset>
 <% end %>
 
 <%= javascript_tag do -%>

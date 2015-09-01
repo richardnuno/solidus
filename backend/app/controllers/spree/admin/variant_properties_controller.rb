@@ -23,6 +23,7 @@ module Spree
       end
 
       def load_option_values
+        debugger
         @option_types = @product.option_types.includes(:option_values)
       end
 
