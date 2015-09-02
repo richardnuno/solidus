@@ -16,8 +16,10 @@ namespace 'spree:migrations:migrate_variant_properties' do
 
     Spree::ProductProperty.includes(product: :master).find_each do |product_property|
       master_variant = product_property.product.master
+      # TODO - test find_or_create_by
+      # TODO - should this really be a rake task?
       puts "Migrating product property with id ##{product_property.id}"
-      Spree::VariantProperty.create!(
+      Spree::VariantProperty.find_or_create_by!(
         variant: master_variant,
         value: product_property.value,
         property: product_property.property,

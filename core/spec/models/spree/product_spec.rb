@@ -432,7 +432,7 @@ describe Spree::Product, :type => :model do
       expect(product.reload.total_on_hand).to eql(5)
     end
   end
-  
+
   # Regression spec for https://github.com/spree/spree/issues/5588
   context '#validate_master when duplicate SKUs entered' do
     let!(:first_product) { create(:product, sku: 'a-sku') }
@@ -445,5 +445,25 @@ describe Spree::Product, :type => :model do
   it "initializes a master variant when building a product" do
     product = Spree::Product.new
     expect(product.master.is_master).to be true
+  end
+
+  describe "#variant_option_types" do
+    let(:size) { create(:option_type, name: 'size') }
+    let(:length) { create(:option_type, name: 'length') }
+    let(:product) { create(:product, option_types: [size, length]) }
+    let(:size_small) { create(:option_value, name: 'small', option_type: size) }
+    let(:size_medium) { create(:option_value, name: 'medium', option_type: size) }
+    let(:size_large) { create(:option_value, name: 'large', option_type: size) }
+    let!(:variant) { create(:variant, product: product, option_values: [size_small, size_medium]) }
+
+    subject { product.variant_option_types }
+
+    it "returns the option types associated with the product's variants" do
+      expect(subject).to match_array [size]
+    end
+
+    it "only eager loads the option values associated with the product's variants" do
+      expect(subject.first.option_values).to match_array [size_small, size_medium]
+    end
   end
 end

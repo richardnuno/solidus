@@ -199,6 +199,19 @@ module Spree
       end
     end
 
+    # @param apply_filter [Boolean] whether or not to apply the
+    # configured filter
+    # @return [Array<Spree::OptionType>] all option types (with
+    # eager loaded option values) that are associated with the
+    # product's variants
+    def variant_option_types(apply_filter: true)
+      option_types.eager_load(option_values: [:variants])
+        .where(Spree::Variant.arel_table[:product_id].eq(self.id))
+        .where(apply_filter ? Spree::Config.product_variant_option_type_filter : nil)
+        .distinct
+        .order("spree_option_types.position, spree_option_values.position")
+    end
+
     # @return [Boolean] true if there are no option values
     def empty_option_values?
       options.empty? || options.any? do |opt|

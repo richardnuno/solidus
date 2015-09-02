@@ -244,6 +244,11 @@ module Spree
       @promotion_chooser_class ||= Spree::PromotionChooser
     end
 
+    attr_writer :product_variant_option_type_filter
+    def product_variant_option_type_filter
+      @product_variant_option_type_filter ||= {}
+    end
+
     def static_model_preferences
       @static_model_preferences ||= Spree::Preferences::StaticModelPreferences.new
     end
