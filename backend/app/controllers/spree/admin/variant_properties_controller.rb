@@ -26,7 +26,19 @@ module Spree
             variant_property.save!
           end
         end
-        redirect_to admin_product_variant_properties_url(@product)
+
+        redirect_to admin_product_variant_properties_url(@product, ovi: params[:option_value_ids].split)
+      end
+
+      protected
+
+      # TODO - is there a better way that goes through the product
+      def find_resource
+        if action == :destroy
+          Spree::VariantProperty.find(params[:id])
+        else
+          super
+        end
       end
 
       private

@@ -1,7 +1,7 @@
 module Spree
   class VariantProperty < Spree::Base
     acts_as_list
-    has_many :variant_property_variants, foreign_key: "variant_property_id", class_name: "Spree::VariantPropertyVariant"
+    has_many :variant_property_variants, foreign_key: "variant_property_id", dependent: :destroy, class_name: "Spree::VariantPropertyVariant"
     has_many :variants, through: :variant_property_variants
     belongs_to :variant, touch: true, class_name: 'Spree::Variant', inverse_of: :variant_properties
     belongs_to :property, class_name: 'Spree::Property', inverse_of: :variant_properties

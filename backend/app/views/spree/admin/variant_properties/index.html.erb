@@ -57,7 +57,7 @@
     <fieldset class='no-border-top'>
       <% @option_types.each do |option_type, option_values| %>
         <div class="field">
-          <%= label :new_variant, option_type.presentation %>
+          <%= label :option_type_presentation, option_type.presentation %>
           <%= select_tag "ovi[]", options_from_collection_for_select(option_values, :id, :presentation, params[:ovi]), class: 'select2 fullwidth', include_blank: true, id: "#{option_type.name}_option_type_select" %>
         </div>
       <% end %>
@@ -74,6 +74,7 @@
 
 <%= form_for Spree::Variant.new, url: update_variants_admin_product_variant_properties_url(@product), method: :put do |f| %>
   <%= hidden_field_tag 'filtered_variant_ids', @variant_ids %>
+  <%= hidden_field_tag 'option_value_ids', @option_value_ids %>
   <% if @option_value_ids.present? %>
     <fieldset class='no-border-top'>
       <table class="index sortable" data-hook data-sortable-link="<%= update_positions_admin_product_variant_properties_url %>">
