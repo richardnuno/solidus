@@ -204,12 +204,13 @@ module Spree
     # @return [Array<Spree::OptionType>] all option types (with
     # eager loaded option values) that are associated with the
     # product's variants
-    def variant_option_types(apply_filter: true)
-      option_types.eager_load(option_values: [:variants])
-        .where(Spree::Variant.arel_table[:product_id].eq(self.id))
-        .where(apply_filter ? Spree::Config.product_variant_option_type_filter : nil)
-        .distinct
-        .order("spree_option_types.position, spree_option_values.position")
+    def variant_option_types(variant_scope = nil)
+      option_value_ids = Spree::OptionValuesVariant.joins(:variant)
+        .where(spree_variants: { product_id: self.id})
+        .merge(variant_scope)
+        .distinct.pluck(:option_value_id)
+      # TODO - order without table names
+      Spree::OptionValue.where(id: option_value_ids).includes(:option_type).order("spree_option_types.position, spree_option_values.position").group_by(&:option_type)
     end
 
     # @return [Boolean] true if there are no option values

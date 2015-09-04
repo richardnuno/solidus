@@ -8,20 +8,24 @@ module Spree
       before_action :load_variant_properties, only: :index
 
       def update_product
-        #@product.master.update_attributes!(bulk_permitted_params[:master])
-        debugger
+        @product.master.update_attributes!(bulk_permitted_params[:master])
         redirect_to admin_product_variant_properties_url(@product)
       end
 
       def update_variants
-        variants = @product.variants.where(id: params[:filtered_variant_ids].split)
-        variant_properties = params.require(:variant).permit!
+        variant_ids = params[:filtered_variant_ids].split
+        variant_properties = params.require(:variant).permit![:variant_properties_attributes].values
         Spree::VariantProperty.transaction do
-          variants.each do |variant|
-            variant.update_attributes!(variant_properties)
+          # TODO - variant_property will not get deleted if all associations are deleted
+          Spree::VariantPropertyVariant.where(variant_id: variant_ids).destroy_all
+          variant_properties.each do |vp|
+            next if vp[:property_name].blank?
+            variant_property = vp[:id].present? ? Spree::VariantProperty.find(vp[:id]) : Spree::VariantProperty.new
+            variant_property.attributes = vp
+            variant_property.variant_ids = variant_ids
+            variant_property.save!
           end
         end
-
         redirect_to admin_product_variant_properties_url(@product)
       end
 
@@ -40,11 +44,13 @@ module Spree
       end
 
       def load_variant_properties
+        @variant_properties = []
         @option_value_ids = (params[:ovi] || []).reject(&:blank?)
         if @option_value_ids.present?
           @variant_ids = @product.variants.joins(:option_values).where(spree_option_values: { id: @option_value_ids }).group("spree_variants.id").having("count(spree_option_values.id) = ?", @option_value_ids.size).pluck(:id)
-          @variant_properties = Spree::VariantProperty.where(variant_id: @variant_ids).order(:position).uniq
-          @variant_properties << @variant_properties.build
+          variant_property_ids = Spree::VariantPropertyVariant.select(:variant_property_id).where(variant_id: @variant_ids).group(:variant_property_id).having("count(variant_id) = ?", @variant_ids.count).pluck(:variant_property_id)
+          @variant_properties = Spree::VariantProperty.includes(:property).where(id: variant_property_ids).order(:position).uniq
+          @variant_properties << Spree::VariantProperty.new
         end
       end
 

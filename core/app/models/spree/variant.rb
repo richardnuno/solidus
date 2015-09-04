@@ -36,8 +36,8 @@ module Spree
     has_many :option_values_variants, dependent: :destroy
     has_many :option_values, through: :option_values_variants
 
-    has_many :variant_properties, dependent: :destroy, inverse_of: :variant
-    has_many :properties, through: :variant_properties
+    has_many :variant_property_variants, dependent: :destroy, inverse_of: :variant
+    has_many :variant_properties, through: :variant_property_variants
 
     has_many :images, -> { order(:position) }, as: :viewable, dependent: :destroy, class_name: "Spree::Image"
 
