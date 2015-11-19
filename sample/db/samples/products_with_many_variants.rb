@@ -29,14 +29,19 @@ fit_option_values = Spree::OptionValue.where(option_type: fit_option_type)
 neck_option_values = Spree::OptionValue.where(option_type: neck_option_type)
 sleeve_option_values = Spree::OptionValue.where(option_type: sleeve_option_type)
 
+# Images are already created from existing product
 images = [
-  image("ror_baseball_jersey_red", "png"),
-  image("ror_baseball_jersey_back_red", "png"),
-  image("ror_baseball_jersey_green", "png"),
-  image("ror_baseball_jersey_back_green", "png"),
-  image("ror_baseball_jersey_blue", "png"),
-  image("ror_baseball_jersey_back_blue", "png")
+  Spree::Image.find_by(attachment_file_name: "ror_baseball_jersey_red.png"),
+  Spree::Image.find_by(attachment_file_name: "ror_baseball_jersey_back_red.png"),
+  Spree::Image.find_by(attachment_file_name: "ror_baseball_jersey_green.png"),
+  Spree::Image.find_by(attachment_file_name: "ror_baseball_jersey_back_green.png"),
+  Spree::Image.find_by(attachment_file_name: "ror_baseball_jersey_blue.png"),
+  Spree::Image.find_by(attachment_file_name: "ror_baseball_jersey_back_blue.png"),
 ]
+
+image_insert_text = images.map do |image|
+  "(variant_id, 'Spree::Variant', #{image.attachment_width}, #{image.attachment_height}, #{image.attachment_file_size}, #{image.position}, '#{image.attachment_content_type}', '#{image.attachment_file_name}', '#{DateTime.now.to_s(:db)}', 'Spree::Image', '#{DateTime.now.to_s(:db)}', '#{DateTime.now.to_s(:db)}')"
+end
 
 10.times do |product_number|
   puts "Creating product #{product_number}"
@@ -49,31 +54,34 @@ images = [
     shipping_category: shipping_category
   )
 
+  variant_ids = []
   color_option_values.each do |color_ov|
     collar_option_values.each do |collar_ov|
       fit_option_values.each do |fit_ov|
         neck_option_values.each do |neck_ov|
           sleeve_option_values.each do |sleeve_ov|
-            Spree::Variant.create!(
+            variant = Spree::Variant.create!(
               product: product,
               track_inventory: false,
               option_values: [color_ov, collar_ov, fit_ov, neck_ov, sleeve_ov]
             )
+            variant_ids << variant.id
           end
         end
       end
     end
   end
 
-  # Create variant image rules - 6 images for each color
-  color_option_values.each do |color_ov|
-    image_rule = product.variant_image_rules.build
-    image_rule.conditions.build(option_value: color_ov)
-    images.each do |image|
-      image_rule_value = image_rule.values.build
-      image_rule_value.image_attachment = image
+  variant_images = image_insert_text.dup
+  # Slice required to not pass the query length limit
+  insert_values = variant_images.flat_map do |variant_image|
+    variant_ids.map do |id|
+      variant_image.sub("variant_id", id.to_s)
     end
-    image_rule.save!
+  end.each_slice(500) do |subset|
+    Spree::Image.connection.execute <<-SQL
+      INSERT INTO spree_assets (viewable_id, viewable_type, attachment_width, attachment_height, attachment_file_size, position, attachment_content_type, attachment_file_name, attachment_updated_at, type, created_at, updated_at) VALUES #{subset.join(", ")};
+    SQL
   end
 end
 
